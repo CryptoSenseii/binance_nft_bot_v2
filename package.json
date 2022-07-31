@@ -7,7 +7,7 @@
     "start": "ts-node-dev src/app.ts",
     "dev": "ts-node-dev --respawn --transpile-only src/app.ts"
   },
-  "author": "CryptoSensei",
+  "author": "CryptoSenseii",
   "license": "ISC",
   "devDependencies": {
     "@types/readline-sync": "^1.4.4",
@@ -17,6 +17,9 @@
   },
   "dependencies": {
     "axios": "^0.27.2",
+    "chalk": "^4.1.2",
+    "pino": "^8.3.1",
+    "pino-pretty": "^8.1.0",
     "readline-sync": "^1.4.10",
     "user-agents": "^1.0.1092"
   }

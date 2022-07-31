@@ -1,14 +1,15 @@
 import axios, { AxiosInstance } from 'axios'
-import logger from './logger'
-import UserAgent from 'user-agents'
+import UserAgent  from 'user-agents'
+import { logger } from './logger'
+import chalk from 'chalk'
+import { inputStart, inputSetConfig } from './inputs'
 import { createReadStream } from 'fs'
-import readlineSync from 'readline-sync'
 
-
-
-
-
-
+(async() => {
+    console.log(chalk.greenBright('Welcome to BinanceNFT BOT v2'));
+    inputStart()
+    
+})()
 
 // const axiosClient = axios.create({
 //     proxy: {
