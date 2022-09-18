@@ -1,3 +1,4 @@
 node_modules
 .idea
 proxy.txt
+config.json

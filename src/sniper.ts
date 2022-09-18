@@ -9,6 +9,7 @@ import {Config, Proxy} from "./@types/types";
 export default class Sniper {
     private config!: Config
     private proxies!: Proxy[]
+    private threads!: number
 
     constructor(
         public useProxy: boolean
@@ -67,15 +68,29 @@ export default class Sniper {
         this.proxies = proxies;
     }
 
+    setThreads() {
+        if (!this.proxies || this.proxies.length <= 1) {
+            this.threads = 1;
+        } else if (this.proxies.length > 25) {
+            this.threads = 25;
+        } else {
+            this.threads = this.proxies.length;
+        }
+    }
+
     async start() {
         try {
             await this.setConfig();
+
             if (this.useProxy) {
                 await this.setProxy();
             }
-            logger.success('Live Sniper launched successfully.', {time: true});
+    
+            this.setThreads();
             
+            logger.success(`Live Sniper launched successfully in ${this.threads} threads.`, {time: true});
             
+
         } catch (err: any) {
             logger.error(err, {time: true});
         }
