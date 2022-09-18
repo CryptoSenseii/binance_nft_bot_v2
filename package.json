@@ -1,16 +1,16 @@
 {
   "name": "binance_bot_v2",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node-dev src/app.ts",
-    "dev": "ts-node-dev --respawn --transpile-only src/app.ts"
+    "start": "ts-node-dev src/index.ts",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts"
   },
   "author": "CryptoSenseii",
   "license": "ISC",
   "devDependencies": {
-    "@types/readline-sync": "^1.4.4",
+    "@types/prompts": "^2.0.14",
     "@types/user-agents": "^1.0.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^4.7.4"
@@ -18,9 +18,7 @@
   "dependencies": {
     "axios": "^0.27.2",
     "chalk": "^4.1.2",
-    "pino": "^8.3.1",
-    "pino-pretty": "^8.1.0",
-    "readline-sync": "^1.4.10",
+    "prompts": "^2.4.2",
     "user-agents": "^1.0.1092"
   }
 }

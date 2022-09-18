@@ -1,22 +1,28 @@
-import axios, { AxiosInstance } from 'axios'
-import UserAgent  from 'user-agents'
-import input from 'input'
-import { logger } from './logger'
-import chalk from 'chalk'
-import { inputStart, inputSetConfig } from './inputs'
-import { createReadStream } from 'fs'
+import logger from './logger';
+import chalk from 'chalk';
+import {inputSelectMode, inputUseProxy} from './inputs';
+import Sniper from "./sniper";
 
+(async () => {
+    console.log(chalk.magentaBright('Welcome to BinanceNFT BOT v2'));
 
-(async() => {
-    console.log(chalk.greenBright('Welcome to BinanceNFT BOT v2'));
-    const mode: number = inputStart()
+    const mode: number = await inputSelectMode();
+
     switch (mode) {
         case 0: {
-            return chalk.redBright('Bot stopped.')
+            const useProxy: boolean = await inputUseProxy();
+            const sniper = new Sniper(useProxy);
+            await sniper.start();
+            break;
         }
-        case 1: 
+
+        case 1: {
+
+            break;
+        }
+
     }
-})()
+})();
 
 // const axiosClient = axios.create({
 //     proxy: {

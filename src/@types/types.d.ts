@@ -10,5 +10,5 @@ export declare interface Proxy {
         username: string,
         password: string
     },
-    protocol: 'http'
+    protocol: string
 }
