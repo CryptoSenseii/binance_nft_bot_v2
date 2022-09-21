@@ -50,12 +50,16 @@ const inputUseProxy = async () => {
 }
 
 const inputProxyPath = async () => {
-    const { value } = await prompts({
+    let { value } = await prompts({
         type: 'text',
         name: 'value',
         message: 'Drag / Type the file with your proxies (*.txt)'
     });
-    return value.replaceAll('"', '');
+    value = value.replaceAll('"', '');
+    if (value.slice(-4) !== '.txt') {
+        value += '.txt';
+    }
+    return value;
 }
 
 export { inputSelectMode, inputSetConfig, inputUseProxy, inputProxyPath }
