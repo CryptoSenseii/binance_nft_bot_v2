@@ -1,14 +1,14 @@
 import prompts from 'prompts';
 
 const inputSelectMode = async () => {
-    const {value} = await prompts(
+    const { value } = await prompts(
         {
             type: 'select',
             name: 'value',
             message: 'Select the mode',
             choices: [
-                {title: 'Live sniper', value: 0},
-                {title: 'Last sales', value: 1},
+                { title: 'Live sniper', value: 0 },
+                { title: 'Last sales', value: 1 },
             ],
             initial: 0
         }
@@ -17,7 +17,7 @@ const inputSelectMode = async () => {
 }
 
 const inputSetConfig = async () => {
-    const {uuid, csrf} = await prompts(
+    const { uuid, csrf } = await prompts(
         [
             {
                 type: 'text',
@@ -30,18 +30,18 @@ const inputSetConfig = async () => {
                 message: 'Enter your csrf token'
             }
         ]);
-    return {uuid, csrf};
+    return { uuid, csrf };
 }
 
 const inputUseProxy = async () => {
-    const {value} = await prompts(
+    const { value } = await prompts(
         {
             type: 'select',
             name: 'value',
             message: 'Use proxy',
             choices: [
-                {title: 'Yes', value: true},
-                {title: 'No', value: false},
+                { title: 'Yes', value: true },
+                { title: 'No', value: false },
             ],
             initial: 0
         }
@@ -50,7 +50,7 @@ const inputUseProxy = async () => {
 }
 
 const inputProxyPath = async () => {
-    const {value} = await prompts({
+    const { value } = await prompts({
         type: 'text',
         name: 'value',
         message: 'Drag / Type the file with your proxies (*.txt)'
@@ -58,4 +58,4 @@ const inputProxyPath = async () => {
     return value.replaceAll('"', '');
 }
 
-export {inputSelectMode, inputSetConfig, inputUseProxy, inputProxyPath}
+export { inputSelectMode, inputSetConfig, inputUseProxy, inputProxyPath }

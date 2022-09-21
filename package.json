@@ -10,6 +10,7 @@
   "author": "CryptoSenseii",
   "license": "ISC",
   "devDependencies": {
+    "@types/chance": "^1.1.3",
     "@types/prompts": "^2.0.14",
     "@types/user-agents": "^1.0.2",
     "ts-node-dev": "^2.0.0",
@@ -18,6 +19,7 @@
   "dependencies": {
     "axios": "^0.27.2",
     "chalk": "^4.1.2",
+    "chance": "^1.1.8",
     "prompts": "^2.4.2",
     "user-agents": "^1.0.1092"
   }

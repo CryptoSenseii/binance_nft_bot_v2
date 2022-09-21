@@ -1,10 +1,11 @@
-import axios, {AxiosInstance} from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import logger from './logger';
 import UserAgent from 'user-agents';
 import fs from 'fs';
-import {inputSetConfig, inputProxyPath} from "./inputs";
-import path from 'path';
-import {Config, Proxy} from "./@types/types";
+import { inputSetConfig, inputProxyPath } from "./inputs";
+import { Config, Proxy, Product } from "./typings/types";
+import { Chance } from 'chance';
+import { lastProduct } from './typings/requests';
 
 export default class Sniper {
     private config!: Config
@@ -13,15 +14,14 @@ export default class Sniper {
 
     constructor(
         public useProxy: boolean
-    ) {}
+    ) { }
 
     async setConfig() {
-        const cfgFile = fs.readFileSync(path.join('config.json'), 'utf-8');
-
-        if (!cfgFile) {
+        const isCfgExists = fs.existsSync('config.json');
+        if (!isCfgExists) {
             this.config = await inputSetConfig();
             await this.saveConfigToFile();
-        } else if (Object.keys(JSON.parse(cfgFile)).length === 0) {
+        } else if (Object.keys(JSON.parse(fs.readFileSync('config.json', 'utf-8'))).length === 0) {
             this.config = await inputSetConfig();
             await this.saveConfigToFile();
         }
@@ -78,21 +78,123 @@ export default class Sniper {
         }
     }
 
+    async getLastProductId(): Promise<number> {
+        let axiosClient: AxiosInstance;
+
+        if (this.useProxy) {
+            axiosClient = axios.create({
+                headers: {
+                    'bnc-uuid': this.config.uuid,
+                    'csrftoken': this.config.csrf,
+                    'User-Agent': new UserAgent().toString()
+                },
+                proxy: new Chance().pickone(this.proxies)
+            });
+        } else {
+            axiosClient = axios.create({
+                headers: {
+                    'bnc-uuid': this.config.uuid,
+                    'csrftoken': this.config.csrf,
+                    'User-Agent': new UserAgent().toString()
+                }
+            });
+        }
+
+        return await axiosClient.post('https://www.binance.com/bapi/nft/v1/friendly/nft/asset/market/asset-list', )
+            .then(({ data }) => data.data.rows[0].productId)
+            .catch(err => {
+               throw Error(err);
+            });
+    }
+
+    async getProductData(proxy: Proxy, productId: number): Promise<any> {
+        let axiosClient: AxiosInstance;
+
+        if (this.useProxy) {
+            axiosClient = axios.create({
+                headers: {
+                    'bnc-uuid': this.config.uuid,
+                    'csrftoken': this.config.csrf,
+                    'User-Agent': new UserAgent().toString()
+                },
+                proxy: new Chance().pickone(this.proxies)
+            });
+        } else {
+            axiosClient = axios.create({
+                headers: {
+                    'bnc-uuid': this.config.uuid,
+                    'csrftoken': this.config.csrf,
+                    'User-Agent': new UserAgent().toString()
+                }
+            });
+        }
+
+        return await axiosClient.post('https://www.binance.com/bapi/nft/v1/friendly/nft/nft-trade/product-detail', {
+            productId: productId
+        })
+            .then(({ data }) => data.data.productDetail)
+            .catch(() => false);
+    }
+
+    analyzeProduct(productData: Product) {
+        
+        console.log('Analyzing...', productData.productNo, productData.id);
+    }
+
+    async main() {
+        let workingThreads: number = 0;
+        let counter: number = 0;
+        let productId: number = await this.getLastProductId();
+        let errorTracker: boolean[] = [];
+
+        while (true) {
+            if (workingThreads < this.threads) {
+                workingThreads++;
+
+                if (counter === this.proxies.length) {
+                    counter = 0;
+                }
+
+                if (errorTracker.filter(e => e === false).length >= errorTracker.length * 0.8 && errorTracker.length > 3) {
+                    productId = await this.getLastProductId();
+                }
+                this.getProductData(this.proxies[counter % this.proxies.length], productId)
+                    .then(async (productData) => {
+                        workingThreads--;
+                        if (errorTracker.length === 5 * this.threads) {
+                            errorTracker.splice(0, 1);
+                        }
+                        productData === false ? errorTracker.push(false) : errorTracker.push(true);
+                        if (productData !== false) {
+                            this.analyzeProduct(productData);
+                        }
+                    });
+                productId++;
+                counter++;
+            } else {
+                await new Promise(r => setTimeout(r, 25));
+            }
+        }
+    }
+
     async start() {
-        try {
+       try {
             await this.setConfig();
 
             if (this.useProxy) {
                 await this.setProxy();
+            } else {
+                this.proxies = [];
             }
-    
+
             this.setThreads();
-            
-            logger.success(`Live Sniper launched successfully in ${this.threads} threads.`, {time: true});
-            
+
+            logger.success(`Live Sniper launched successfully in ${this.threads} threads.`, { time: true });
+
+            await this.main();
 
         } catch (err: any) {
-            logger.error(err, {time: true});
-        }
+           logger.error(err, { time: true });
+       }
     }
 }

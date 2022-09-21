@@ -1,6 +1,5 @@
-import logger from './logger';
 import chalk from 'chalk';
-import {inputSelectMode, inputUseProxy} from './inputs';
+import { inputSelectMode, inputUseProxy } from './inputs';
 import Sniper from "./sniper";
 
 (async () => {
@@ -23,17 +22,3 @@ import Sniper from "./sniper";
 
     }
 })();
-
-// const axiosClient = axios.create({
-//     proxy: {
-//        host: host,
-//        port: port,
-//        auth: {
-//           username: username,
-//           password: password
-//        },
-//        protocol: 'http'
-//     }
-// })
-
-// const calcProfit = (a, b, fee) => ( a / b ) - 1 - fee
