@@ -17,7 +17,7 @@ const inputSelectMode = async () => {
 }
 
 const inputSetConfig = async () => {
-    const { uuid, csrf } = await prompts(
+    let { uuid, csrf } = await prompts(
         [
             {
                 type: 'text',
@@ -30,6 +30,8 @@ const inputSetConfig = async () => {
                 message: 'Enter your csrf token'
             }
         ]);
+    uuid = uuid.trim();
+    csrf = csrf.trim();
     return { uuid, csrf };
 }
 

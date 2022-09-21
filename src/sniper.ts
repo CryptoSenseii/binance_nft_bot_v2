@@ -3,8 +3,8 @@ import logger from './logger';
 import UserAgent from 'user-agents';
 import fs from 'fs';
 import { inputSetConfig, inputProxyPath } from "./inputs";
-import { Config, Proxy, Product } from "./typings/types";
 import { Chance } from 'chance';
+import { Config, Proxy, Product } from "./typings/types";
 import { lastProduct } from './typings/requests';
 
 export default class Sniper {
@@ -17,19 +17,23 @@ export default class Sniper {
     ) { }
 
     async setConfig() {
-        const isCfgExists = fs.existsSync('config.json');
-        if (!isCfgExists) {
+        try {
+            const isCfgExists = fs.existsSync('config.json');
+            if (!isCfgExists) {
+                throw Error();
+            } else if (Object.keys(JSON.parse(fs.readFileSync('config.json', 'utf-8'))).length === 0) {
+                this.config = await inputSetConfig();
+            }
+        } catch {
             this.config = await inputSetConfig();
+        } finally {
             await this.saveConfigToFile();
-        } else if (Object.keys(JSON.parse(fs.readFileSync('config.json', 'utf-8'))).length === 0) {
-            this.config = await inputSetConfig();
-            await this.saveConfigToFile();
+            this.config = JSON.parse(fs.readFileSync('config.json', 'utf-8'));
         }
-        this.config = JSON.parse(fs.readFileSync('config.json', 'utf-8'));
     }
 
     async saveConfigToFile() {
-        fs.writeFileSync('config.json', JSON.stringify(this.config));
+        fs.writeFileSync('config.json', JSON.stringify(this.config, null, 4));
     }
 
     async setProxy() {
@@ -100,10 +104,10 @@ export default class Sniper {
             });
         }
 
-        return await axiosClient.post('https://www.binance.com/bapi/nft/v1/friendly/nft/asset/market/asset-list', )
+        return await axiosClient.post('https://www.binance.com/bapi/nft/v1/friendly/nft/asset/market/asset-list', lastProduct)
             .then(({ data }) => data.data.rows[0].productId)
             .catch(err => {
-               throw Error(err);
+                throw Error(err);
             });
     }
 
@@ -178,7 +182,7 @@ export default class Sniper {
     }
 
     async start() {
-       try {
+        try {
             await this.setConfig();
 
             if (this.useProxy) {
@@ -194,7 +198,7 @@ export default class Sniper {
             await this.main();
 
         } catch (err: any) {
-           logger.error(err, { time: true });
-       }
+            logger.error(err, { time: true });
+        }
     }
 }
