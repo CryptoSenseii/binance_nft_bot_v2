@@ -1,4 +1,4 @@
-export declare interface lastProduct {
+export const lastProduct = {
     "amountFrom": "",
     "amountTo": "",
     "assetType": [],

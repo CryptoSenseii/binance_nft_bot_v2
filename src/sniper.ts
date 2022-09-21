@@ -2,7 +2,7 @@ import axios, { AxiosInstance } from 'axios';
 import logger from './logger';
 import UserAgent from 'user-agents';
 import fs from 'fs';
-import { inputSetConfig, inputProxyPath } from "./inputs";
+import { inputUseProxy, inputSetConfig, inputProxyPath } from "./inputs";
 import { Chance } from 'chance';
 import { Config, Proxy, Product } from "./typings/types";
 import { lastProduct } from './typings/requests';
@@ -11,10 +11,9 @@ export default class Sniper {
     private config!: Config
     private proxies!: Proxy[]
     private threads!: number
+    private useProxy!: boolean
 
-    constructor(
-        public useProxy: boolean
-    ) { }
+    constructor() {}
 
     async setConfig() {
         try {
@@ -26,8 +25,8 @@ export default class Sniper {
             }
         } catch {
             this.config = await inputSetConfig();
-        } finally {
             await this.saveConfigToFile();
+        } finally {
             this.config = JSON.parse(fs.readFileSync('config.json', 'utf-8'));
         }
     }
@@ -182,7 +181,9 @@ export default class Sniper {
     }
 
     async start() {
-        try {
+        //try {
+            this.useProxy = await inputUseProxy();
+
             await this.setConfig();
 
             if (this.useProxy) {
@@ -197,8 +198,8 @@ export default class Sniper {
 
             await this.main();
 
-        } catch (err: any) {
-            logger.error(err, { time: true });
-        }
+        // } catch (err: any) {
+        //     logger.error(err, { time: true });
+        // }
     }
 }

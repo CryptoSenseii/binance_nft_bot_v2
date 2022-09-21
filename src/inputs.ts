@@ -30,8 +30,8 @@ const inputSetConfig = async () => {
                 message: 'Enter your csrf token'
             }
         ]);
-    uuid = uuid.trim();
-    csrf = csrf.trim();
+    uuid = uuid.replaceAll(' ', '');
+    csrf = csrf.replaceAll(' ', '');
     return { uuid, csrf };
 }
 

@@ -9,8 +9,7 @@ import Sniper from "./sniper";
 
     switch (mode) {
         case 0: {
-            const useProxy: boolean = await inputUseProxy();
-            const sniper = new Sniper(useProxy);
+            const sniper = new Sniper();
             await sniper.start();
             break;
         }
