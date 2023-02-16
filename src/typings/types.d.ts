@@ -1,6 +1,19 @@
 export declare interface Config {
     uuid: string
-    csrf: string
+    csrf: string,
+    buyOptions?: [
+        {
+            collectionId: number,
+            name?: string,
+            itemId?: number,
+            rarity?: number,
+            maxPrice: number,
+            currencies?: string[],
+            listTypes?: number[],
+            verified?: number,
+            contract?: string,
+        }
+    ]
 }
 
 export declare interface Proxy {
@@ -25,7 +38,7 @@ export declare interface Product {
     maxAmount: string,
     stepAmount: string,
     currentAmount: string,
-    currency: string,
+    currency: 'BUSD' | 'BNB' | 'ETH',
     setStartTime: number,
     setEndTime: number,
     status: number,
@@ -45,22 +58,22 @@ export declare interface Product {
     },
     mediaType: string | null,
     tokenList: [
-      {
-        nftId: number,
-        tokenId: string,
-        contractAddress: string,
-        listBefore: string | number | null,
-        network: string,
-        protocol: string | null
-      }
+        {
+            nftId: number,
+            tokenId: string,
+            contractAddress: string,
+            listBefore: string | number | null,
+            network: string,
+            protocol: string | null
+        }
     ],
     store: null,
     collection: {
-      collectionName: string,
-      avatarUrl: string | null,
-      canView: boolean,
-      collectionId: string,
-      verified: number
+        collectionName: string,
+        avatarUrl: string | null,
+        canView: boolean,
+        collectionId: string | number,
+        verified: number
     },
     createTime: number,
     remarkType: string | null

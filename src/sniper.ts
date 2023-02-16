@@ -12,8 +12,11 @@ export default class Sniper {
     private proxies!: Proxy[]
     private threads!: number
     private useProxy!: boolean
-
-    constructor() {}
+    private currencyRates!: {
+        BUSD?: number,
+        BNB?: number,
+        ETH?: number
+    }
 
     async setConfig() {
         try {
@@ -33,6 +36,27 @@ export default class Sniper {
 
     async saveConfigToFile() {
         fs.writeFileSync('config.json', JSON.stringify(this.config, null, 4));
+    }
+
+    setAxiosClient(proxy?: Proxy) {
+        if (this.useProxy) {
+            return axios.create({
+                headers: {
+                    'bnc-uuid': this.config.uuid,
+                    'csrftoken': this.config.csrf,
+                    'user-agent': new UserAgent().toString()
+                },
+                proxy: proxy || new Chance().pickone(this.proxies)
+            });
+        } else {
+            return axios.create({
+                headers: {
+                    'bnc-uuid': this.config.uuid,
+                    'csrftoken': this.config.csrf,
+                    'user-agent': new UserAgent().toString()
+                }
+            });
+        }
     }
 
     async setProxy() {
@@ -81,28 +105,31 @@ export default class Sniper {
         }
     }
 
-    async getLastProductId(): Promise<number> {
-        let axiosClient: AxiosInstance;
+    async setCurrencyRates(currencies: string[]) {
+        const axiosClient = this.setAxiosClient();
+        const result = {}
 
-        if (this.useProxy) {
-            axiosClient = axios.create({
-                headers: {
-                    'bnc-uuid': this.config.uuid,
-                    'csrftoken': this.config.csrf,
-                    'User-Agent': new UserAgent().toString()
-                },
-                proxy: new Chance().pickone(this.proxies)
-            });
-        } else {
-            axiosClient = axios.create({
-                headers: {
-                    'bnc-uuid': this.config.uuid,
-                    'csrftoken': this.config.csrf,
-                    'User-Agent': new UserAgent().toString()
-                }
-            });
+        for (let i = 0; i < currencies.length; i++) {
+            if (currencies[i] !== 'BUSD') {
+                const rate = await axiosClient.get(`https://www.binance.com/bapi/asset/v2/public/asset-service/product/get-product-by-symbol?symbol=${currencies[i]}USDT`)
+                    .then(({ data }) => Number(data.data.c));
+
+                Object.defineProperty(result, currencies[i], {
+                    value: rate,
+                    enumerable: true
+                });
+            } else if (currencies[i] == 'BUSD') {
+                Object.defineProperty(result, currencies[i], {
+                    value: 1,
+                    enumerable: true
+                });
+            }
         }
+        this.currencyRates = result;
+    }
 
+    async getLastProductId(): Promise<number> {
+        const axiosClient = this.setAxiosClient();
         return await axiosClient.post('https://www.binance.com/bapi/nft/v1/friendly/nft/asset/market/asset-list', lastProduct)
             .then(({ data }) => data.data.rows[0].productId)
             .catch(err => {
@@ -111,27 +138,7 @@ export default class Sniper {
     }
 
     async getProductData(proxy: Proxy, productId: number): Promise<any> {
-        let axiosClient: AxiosInstance;
-
-        if (this.useProxy) {
-            axiosClient = axios.create({
-                headers: {
-                    'bnc-uuid': this.config.uuid,
-                    'csrftoken': this.config.csrf,
-                    'User-Agent': new UserAgent().toString()
-                },
-                proxy: new Chance().pickone(this.proxies)
-            });
-        } else {
-            axiosClient = axios.create({
-                headers: {
-                    'bnc-uuid': this.config.uuid,
-                    'csrftoken': this.config.csrf,
-                    'User-Agent': new UserAgent().toString()
-                }
-            });
-        }
-
+        const axiosClient = this.setAxiosClient(proxy);
         return await axiosClient.post('https://www.binance.com/bapi/nft/v1/friendly/nft/nft-trade/product-detail', {
             productId: productId
         })
@@ -139,9 +146,31 @@ export default class Sniper {
             .catch(() => false);
     }
 
-    analyzeProduct(productData: Product) {
-        
-        console.log('Analyzing...', productData.productNo, productData.id);
+    analyzeProduct(productData: Product): boolean {
+        let result = true;
+        let price: number =  Number(productData.amount) * Number(this.currencyRates[productData.currency]);
+        this.config.buyOptions?.forEach(e => {
+            let filterResult = [];
+            if (e.collectionId) {
+                filterResult.push(e.collectionId == productData.collection.collectionId ? true : false);
+            }
+            if (e.maxPrice) {
+                filterResult.push(55 <= e.maxPrice  ? true : false);
+            }
+
+            filterResult.includes(false) ? result = false : result = true
+        });
+
+        if (result === true) {
+            logger.info(`Gotcha! ${productData.collection.collectionId} ${productData.title} ${productData.amount} ${productData.tokenList[0].nftId}`);
+        }
+        return result;
+    }
+
+    async buy(proxy: Proxy, productData: Product) {
+        const axiosClient = this.setAxiosClient(proxy);
+        const nftId = productData.tokenList[0].nftId;
+        console.log('Buying...', nftId)
     }
 
     async main() {
@@ -149,6 +178,11 @@ export default class Sniper {
         let counter: number = 0;
         let productId: number = await this.getLastProductId();
         let errorTracker: boolean[] = [];
+
+        setInterval(() => logger.info('Still running...', { time: true }), 60000);
+        setInterval(async () => await this.setCurrencyRates(['BNB', 'ETH']), 300000);
+        
+        await this.setCurrencyRates(['BUSD', 'BNB', 'ETH']);
 
         while (true) {
             if (workingThreads < this.threads) {
@@ -169,37 +203,32 @@ export default class Sniper {
                         }
                         productData === false ? errorTracker.push(false) : errorTracker.push(true);
                         if (productData !== false) {
-                            this.analyzeProduct(productData);
+                            const matches = this.analyzeProduct(productData);
+                            if (matches === true) {
+                                await this.buy(this.proxies[counter % this.proxies.length], productData);
+                            }
                         }
                     });
                 productId++;
                 counter++;
             } else {
-                await new Promise(r => setTimeout(r, 25));
+                await new Promise(r => setTimeout(r, 100));
             }
         }
     }
 
     async start() {
-        //try {
+        try {
             this.useProxy = await inputUseProxy();
-
             await this.setConfig();
-
-            if (this.useProxy) {
-                await this.setProxy();
-            } else {
-                this.proxies = [];
-            }
-
+            this.useProxy === true ? await this.setProxy() : this.proxies = [];
             this.setThreads();
+            this.main();
 
             logger.success(`Live Sniper launched successfully in ${this.threads} threads.`, { time: true });
 
-            await this.main();
-
-        // } catch (err: any) {
-        //     logger.error(err, { time: true });
-        // }
+        } catch (err: any) {
+            logger.error(err, { time: true });
+        }
     }
 }
